@@ -36,7 +36,7 @@ extern "C" {
 /**
  * @brief   Maximum possible packet size in byte
  */
-#define CC2420_PKT_MAXLEN       (127U)
+#define CC2420_PKT_MAXLEN       (IEEE802154_FRAME_LEN_MAX)
 
 /**
  * @brief   Default addresses used if the CPUID module is not present
@@ -49,20 +49,15 @@ extern "C" {
 /**
  * @brief   PAN ID configuration
  */
-#define CC2420_PANID_DEFAULT    (0x0023)
+#define CC2420_PANID_DEFAULT    (IEEE802154_DEFAULT_PANID)
 
 /**
   * @brief   Channel configuration
   * @{
   */
-#define CC2420_CHAN_MIN         (11U)
-#define CC2420_CHAN_MAX         (26U)
-#ifdef DEFAULT_CHANNEL
-#define CC2420_CHAN_DEFAULT     (DEFAULT_CHANNEL)
-#endif
-#ifndef CC2420_CHAN_DEFAULT
-#define CC2420_CHAN_DEFAULT     (26U)
-#endif
+#define CC2420_CHAN_MIN         (IEEE802154_CHANNEL_MIN)
+#define CC2420_CHAN_MAX         (IEEE802154_CHANNEL_MAX)
+#define CC2420_CHAN_DEFAULT     (IEEE802154_DEFAULT_CHANNEL)
 /** @} */
 
 /**
@@ -71,7 +66,7 @@ extern "C" {
  */
 #define CC2420_TXPOWER_MIN      (-25)
 #define CC2420_TXPOWER_MAX      (0)
-#define CC2420_TXPOWER_DEFAULT  (0)
+#define CC2420_TXPOWER_DEFAULT  (IEEE802154_DEFAULT_TXPOWER)
 /** @} */
 
 /**
@@ -309,6 +304,9 @@ void cc2420_tx_exec(cc2420_t *dev);
  * @param[out] buf          buffer to write data to
  * @param[in]  max_len      number of bytes to read from device
  * @param[in]  info         to be removed
+ *
+ * @return                  the number of bytes in the Rx FIFO
+ * @return                  the number of bytes written to @p buf if present
  */
 int cc2420_rx(cc2420_t *dev, uint8_t *buf, size_t max_len, void *info);
 

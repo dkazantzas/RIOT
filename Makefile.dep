@@ -19,8 +19,14 @@ ifneq (,$(filter nhdp,$(USEMODULE)))
   USEMODULE += oonf_rfc5444
 endif
 
+ifneq (,$(filter sntp,$(USEMODULE)))
+  USEMODULE += gnrc_sock_udp
+  USEMODULE += xtimer
+endif
+
 ifneq (,$(filter gnrc_netdev_default,$(USEMODULE)))
   USEMODULE += gnrc_netif
+  USEMODULE += gnrc_netdev2
   USEMODULE += netdev_default
 endif
 
@@ -57,6 +63,23 @@ ifneq (,$(filter gnrc_conn_udp,$(USEMODULE)))
   USEMODULE += gnrc_udp
 endif
 
+ifneq (,$(filter gnrc_sock_%,$(USEMODULE)))
+  USEMODULE += gnrc_sock
+endif
+
+ifneq (,$(filter gnrc_sock_udp,$(USEMODULE)))
+  USEMODULE += gnrc_udp
+  USEMODULE += random     # to generate random ports
+endif
+
+ifneq (,$(filter gnrc_sock,$(USEMODULE)))
+  USEMODULE += gnrc_netapi_mbox
+endif
+
+ifneq (,$(filter gnrc_netapi_mbox,$(USEMODULE)))
+  USEMODULE += core_mbox
+endif
+
 ifneq (,$(filter netdev2_tap,$(USEMODULE)))
   USEMODULE += netif
   USEMODULE += netdev2_eth
@@ -71,6 +94,10 @@ ifneq (,$(filter gnrc_zep,$(USEMODULE)))
   USEMODULE += gnrc_udp
   USEMODULE += random
   USEMODULE += xtimer
+endif
+
+ifneq (,$(filter gcoap,$(USEMODULE)))
+  USEMODULE += gnrc_udp
 endif
 
 ifneq (,$(filter gnrc_tftp,$(USEMODULE)))
