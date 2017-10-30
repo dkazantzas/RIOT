@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008, 2009, 2010  Kaspar Schleiser <kaspar@schleiser.de>
+ * Copyright (C) 2008, 2009, 2010 Kaspar Schleiser <kaspar@schleiser.de>
  * Copyright (C) 2013 INRIA
  * Copyright (C) 2013 Ludwig Knüpfer <ludwig.knuepfer@fu-berlin.de>
  *
@@ -33,10 +33,6 @@
 #include "periph/rtc.h"
 #endif
 
-#ifdef MODULE_LTC4150
-#include "ltc4150.h"
-#endif
-
 #ifdef MODULE_NETIF
 #include "net/gnrc/pktdump.h"
 #include "net/gnrc.h"
@@ -44,10 +40,6 @@
 
 int main(void)
 {
-#ifdef MODULE_LTC4150
-    ltc4150_start();
-#endif
-
 #ifdef FEATURE_PERIPH_RTC
     rtc_init();
 #endif

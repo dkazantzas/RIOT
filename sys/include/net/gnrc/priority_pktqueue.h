@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2015 Daniel Krebs
+ *               2016 INRIA
  *
  * This file is subject to the terms and conditions of the GNU Lesser
  * General Public License v2.1. See the file LICENSE in the top level
@@ -7,24 +8,25 @@
  */
 
 /**
- * @{
- * @defgroup    net_gnrc_priority_pktqueue Priority packet queue
+ * @defgroup    net_gnrc_priority_pktqueue Priority packet queue for GNRC
  * @ingroup     net_gnrc
+ * @brief       Wrapper for priority_queue that holds gnrc_pktsnip_t*
+ * @{
+ *
  * @file
- * @brief       Wrapper for priority_queue that holds gnrc_pktsnip_t* and is
- *              aware of it's length.
+ * @brief       gnrc priority packet queue API
  *
  * @author      Daniel Krebs <github@daniel-krebs.net>
  * @author      Shuguo Zhuo <shuguo.zhuo@inria.fr>
- * @}
  */
 
-#ifndef GNRC_PRIORITY_PKTQUEUE_H
-#define GNRC_PRIORITY_PKTQUEUE_H
+#ifndef NET_GNRC_PRIORITY_PKTQUEUE_H
+#define NET_GNRC_PRIORITY_PKTQUEUE_H
 
 #include <stdint.h>
-#include <priority_queue.h>
-#include <net/gnrc/pkt.h>
+
+#include "priority_queue.h"
+#include "net/gnrc/pkt.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -82,6 +84,7 @@ static inline void gnrc_priority_pktqueue_node_init(gnrc_priority_pktqueue_node_
 static inline void gnrc_priority_pktqueue_init(gnrc_priority_pktqueue_t *queue)
 {
     gnrc_priority_pktqueue_t qn = PRIORITY_PKTQUEUE_INIT;
+
     *queue = qn;
 }
 
@@ -99,7 +102,7 @@ uint32_t gnrc_priority_pktqueue_length(gnrc_priority_pktqueue_t *queue);
  *
  * @param[out]  queue    the gnrc priority packet queue, must not be NULL
  */
-void gnrc_priority_pktqueue_flush(gnrc_priority_pktqueue_t* queue);
+void gnrc_priority_pktqueue_flush(gnrc_priority_pktqueue_t *queue);
 
 /**
  * @brief Get first element and remove it from @p queue
@@ -108,7 +111,7 @@ void gnrc_priority_pktqueue_flush(gnrc_priority_pktqueue_t* queue);
  *
  * @return              the old head
  */
-gnrc_pktsnip_t* gnrc_priority_pktqueue_pop(gnrc_priority_pktqueue_t* queue);
+gnrc_pktsnip_t *gnrc_priority_pktqueue_pop(gnrc_priority_pktqueue_t *queue);
 
 /**
  * @brief Get first element from @p queue without removing
@@ -117,7 +120,7 @@ gnrc_pktsnip_t* gnrc_priority_pktqueue_pop(gnrc_priority_pktqueue_t* queue);
  *
  * @return              the head of @p queue
  */
-gnrc_pktsnip_t* gnrc_priority_pktqueue_head(gnrc_priority_pktqueue_t* queue);
+gnrc_pktsnip_t *gnrc_priority_pktqueue_head(gnrc_priority_pktqueue_t *queue);
 
 /**
  * @brief       add @p node into @p queue based on its priority
@@ -125,11 +128,12 @@ gnrc_pktsnip_t* gnrc_priority_pktqueue_head(gnrc_priority_pktqueue_t* queue);
  * @param[in,out]   queue   the gnrc priority packet queue, must not be NULL
  * @param[in]       node    the node to add.
  */
-void gnrc_priority_pktqueue_push(gnrc_priority_pktqueue_t* queue,
+void gnrc_priority_pktqueue_push(gnrc_priority_pktqueue_t *queue,
                                  gnrc_priority_pktqueue_node_t *node);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* GNRC_PRIORITY_PKTQUEUE_H */
+#endif /* NET_GNRC_PRIORITY_PKTQUEUE_H */
+/** @} */

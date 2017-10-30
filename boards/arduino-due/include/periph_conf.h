@@ -18,8 +18,8 @@
  * @author      Andreas "Paul" Pauli <andreas.pauli@haw-hamburg.de>
  */
 
-#ifndef PERIPH_CONF_H_
-#define PERIPH_CONF_H_
+#ifndef PERIPH_CONF_H
+#define PERIPH_CONF_H
 
 #include "periph_cpu.h"
 
@@ -28,7 +28,7 @@ extern "C" {
 #endif
 
 /**
- * @name Clock configuration
+ * @name    Clock configuration
  * @{
  */
 /* targeted system core clock */
@@ -48,13 +48,12 @@ extern "C" {
 /** @} */
 
 /**
- * @name Timer peripheral configuration
+ * @name    Timer peripheral configuration
  * @{
  */
 static const timer_conf_t timer_config[] = {
-    /* dev, channel 0 ID */
-    { TC0, ID_TC0 },
-    { TC1, ID_TC3 },
+    { .dev = TC0, .id_ch0 = ID_TC0 },
+    { .dev = TC1, .id_ch0 = ID_TC3 }
 };
 
 #define TIMER_0_ISR         isr_tc0
@@ -64,15 +63,42 @@ static const timer_conf_t timer_config[] = {
 /** @} */
 
 /**
- * @name UART configuration
+ * @name    UART configuration
  * @{
  */
 static const uart_conf_t uart_config[] = {
-    /* device, rx port, tx port, rx pin, tx pin, mux, PMC bit, IRGn line */
-    {(Uart *)UART,   PIOA, PIOA,  8,  9, GPIO_MUX_A, ID_UART,   UART_IRQn},
-    {(Uart *)USART0, PIOA, PIOA, 10, 11, GPIO_MUX_A, ID_USART0, USART0_IRQn},
-    {(Uart *)USART1, PIOA, PIOA, 12, 13, GPIO_MUX_A, ID_USART1, USART1_IRQn},
-    {(Uart *)USART3, PIOD, PIOD,  4,  5, GPIO_MUX_B, ID_USART3, USART3_IRQn}
+    {
+        .dev    = (Uart *)UART,
+        .rx_pin = GPIO_PIN(PA, 8),
+        .tx_pin = GPIO_PIN(PA, 9),
+        .mux    = GPIO_MUX_A,
+        .pmc_id = ID_UART,
+        .irqn   = UART_IRQn
+    },
+    {
+        .dev    = (Uart *)USART0,
+        .rx_pin = GPIO_PIN(PA, 10),
+        .tx_pin = GPIO_PIN(PA, 11),
+        .mux    = GPIO_MUX_A,
+        .pmc_id = ID_USART0,
+        .irqn   = USART0_IRQn
+    },
+    {
+        .dev    = (Uart *)USART1,
+        .rx_pin = GPIO_PIN(PA, 12),
+        .tx_pin = GPIO_PIN(PA, 13),
+        .mux    = GPIO_MUX_A,
+        .pmc_id = ID_USART1,
+        .irqn   = USART1_IRQn
+    },
+    {
+        .dev    = (Uart *)USART3,
+        .rx_pin = GPIO_PIN(PD, 5),
+        .tx_pin = GPIO_PIN(PD, 4),
+        .mux    = GPIO_MUX_B,
+        .pmc_id = ID_USART3,
+        .irqn   = USART3_IRQn
+    }
 };
 
 /* define interrupt vectors */
@@ -85,66 +111,41 @@ static const uart_conf_t uart_config[] = {
 /** @} */
 
 /**
-* @name SPI configuration
+* @name     SPI configuration
 * @{
 */
-#define SPI_NUMOF           (1U)
-#define SPI_0_EN            1
+static const spi_conf_t spi_config[] = {
+    {
+        .dev   = SPI0,
+        .id    = ID_SPI0,
+        .clk   = GPIO_PIN(PA, 27),
+        .mosi  = GPIO_PIN(PA, 26),
+        .miso  = GPIO_PIN(PA, 25),
+        .mux   = GPIO_MUX_A
+    }
+};
 
-/* SPI 0 device config */
-#define SPI_0_DEV           SPI0
-#define SPI_0_CLKEN()       (PMC->PMC_PCER0 |= (1 << ID_SPI0));
-#define SPI_0_CLKDIS()      (PMC->PMC_PCER0 &= ~(1 << ID_SPI0));
-#define SPI_0_IRQ           SPI0_IRQn
-#define SPI_0_IRQ_HANDLER   isr_spi0
-#define SPI_0_IRQ_PRIO      1
-
-/* SPI 0 pin configuration */
-#define SPI_0_MISO_PIN      PIO_PA25A_SPI0_MISO
-#define SPI_0_MOSI_PIN      PIO_PA26A_SPI0_MOSI
-#define SPI_0_SCK_PIN       PIO_PA27A_SPI0_SPCK
-#define SPI_0_MISO_PORT     PIOA
-#define SPI_0_MOSI_PORT     PIOA
-#define SPI_0_SCK_PORT      PIOA
-#define SPI_0_MISO_PORT_CLKEN()  (PMC->PMC_PCER0 |= (1 << ID_PIOA));
-#define SPI_0_MOSI_PORT_CLKEN()  (PMC->PMC_PCER0 |= (1 << ID_PIOA));
-#define SPI_0_SCK_PORT_CLKEN()   (PMC->PMC_PCER0 |= (1 << ID_PIOA));
+#define SPI_NUMOF           (sizeof(spi_config) / sizeof(spi_config[0]))
 /** @} */
 
 /**
- * @name PWM configuration
+ * @name    PWM configuration
  * @{
  */
-#define PWM_NUMOF           (1U)
-#define PWM_0_EN            (1)
-#define PWM_MAX_VALUE       (0xffff)
-#define PWM_MAX_CHANNELS    (4U)
+static const pwm_chan_conf_t pwm_chan[] = {
+    { .pin = GPIO_PIN(PC, 21), .hwchan = 4 },
+    { .pin = GPIO_PIN(PC, 22), .hwchan = 5 },
+    { .pin = GPIO_PIN(PC, 23), .hwchan = 6 },
+    { .pin = GPIO_PIN(PC, 24), .hwchan = 7 }
+};
 
-/* PWM_0 configuration */
-#define PWM_0_DEV           PWM
-#define PWM_0_PID           ID_PWM
-#define PWM_0_CHANNELS      (4U)
-#define PWM_0_DEV_CH0       (&(PWM_0_DEV->PWM_CH_NUM[4]))
-#define PWM_0_ENA_CH0       PWM_ENA_CHID4
-#define PWM_0_PORT_CH0      PIOC
-#define PWM_0_PIN_CH0       PIO_PC21B_PWML4
-#define PWM_0_DEV_CH1       (&(PWM_0_DEV->PWM_CH_NUM[5]))
-#define PWM_0_ENA_CH1       PWM_ENA_CHID5
-#define PWM_0_PORT_CH1      PIOC
-#define PWM_0_PIN_CH1       PIO_PC22B_PWML5
-#define PWM_0_DEV_CH2       (&(PWM_0_DEV->PWM_CH_NUM[6]))
-#define PWM_0_ENA_CH2       PWM_ENA_CHID6
-#define PWM_0_PORT_CH2      PIOC
-#define PWM_0_PIN_CH2       PIO_PC23B_PWML6
-#define PWM_0_DEV_CH3       (&(PWM_0_DEV->PWM_CH_NUM[7]))
-#define PWM_0_ENA_CH3       PWM_ENA_CHID7
-#define PWM_0_PORT_CH3      PIOC
-#define PWM_0_PIN_CH3       PIO_PC24B_PWML7
+#define PWM_NUMOF           (1U)
+#define PWM_CHAN_NUMOF      (sizeof(pwm_chan) / sizeof(pwm_chan[0]))
 /** @} */
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* PERIPH_CONF_H_ */
+#endif /* PERIPH_CONF_H */
 /** @} */

@@ -9,6 +9,7 @@
 
 /**
  * @ingroup     cpu_lm4f120
+ * @ingroup     drivers_periph_timer
  * @{
  *
  * @file        timer.c
@@ -21,8 +22,6 @@
 #include <stdint.h>
 
 #include "cpu.h"
-#include "sched.h"
-#include "thread.h"
 #include "periph_conf.h"
 #include "periph/timer.h"
 #include "mutex.h"
@@ -47,6 +46,9 @@ static timer_conf_t config[TIMER_NUMOF];
 /**@}*/
 
 #include "hw_timer.h"
+
+/* enable timer interrupts */
+static inline void _irq_enable(tim_t dev);
 
 /* Missing from driverlib */
 static inline unsigned long
@@ -117,25 +119,10 @@ int timer_init(tim_t dev, unsigned long freq, timer_cb_t cb, void *arg)
 
     ROM_TimerIntEnable(timer_base, timer_intbit);
 
-    timer_irq_enable(dev);
+    _irq_enable(dev);
     timer_start(dev);
 
     return 0;
-}
-
-int timer_set(tim_t dev, int channel, unsigned int timeout)
-{
-    unsigned int corrected_now;
-    int retval;
-
-    if (dev >= TIMER_NUMOF){
-        return -1;
-    }
-
-    corrected_now = timer_read(dev);
-    retval = timer_set_absolute(dev, channel, corrected_now+timeout);
-
-    return retval;
 }
 
 int timer_set_absolute(tim_t dev, int channel, unsigned int value)
@@ -307,7 +294,7 @@ void timer_stop(tim_t dev)
     ROM_TimerDisable(timer_base, timer_side);
 }
 
-void timer_irq_enable(tim_t dev)
+static inline void _irq_enable(tim_t dev)
 {
     unsigned int timer_intbase;
 
@@ -334,46 +321,13 @@ void timer_irq_enable(tim_t dev)
     ROM_IntEnable(timer_intbase);
 }
 
-void timer_irq_disable(tim_t dev)
-{
-    unsigned int timer_base;
-    unsigned int timer_intbit = TIMER_TIMA_TIMEOUT;
-    unsigned int timer_intbase;
-
-    if (dev >= TIMER_NUMOF){
-        return;
-    }
-
-    switch(dev){
-#if TIMER_0_EN
-    case TIMER_0:
-        timer_base = WTIMER0_BASE;
-        timer_intbase = INT_WTIMER0A;
-        break;
-#endif
-#if TIMER_1_EN
-    case TIMER_1:
-        timer_base = WTIMER1_BASE;
-        timer_intbase = INT_WTIMER1A;
-        break;
-#endif
-    default:
-        return; /* unreachable */
-    }
-
-    ROM_IntEnable(timer_intbase);
-    ROM_TimerIntDisable(timer_base, timer_intbit);
-}
-
 #if TIMER_0_EN
 void isr_wtimer0a(void)
 {
     /* Clears both IT */
     ROM_TimerIntClear(WTIMER0_BASE, TIMER_TIMA_TIMEOUT | TIMER_TIMA_MATCH);
     config[TIMER_0].cb(config[TIMER_0].arg, 0);
-    if (sched_context_switch_request){
-        thread_yield();
-    }
+    cortexm_isr_end();
 }
 #endif /* TIMER_0_EN */
 
@@ -383,9 +337,7 @@ void isr_wtimer1a(void)
     ROM_TimerIntClear(WTIMER1_BASE, TIMER_TIMA_TIMEOUT | TIMER_TIMA_MATCH);
 
     config[TIMER_1].cb(config[TIMER_0].arg, 0);
-    if (sched_context_switch_request){
-        thread_yield();
-    }
+    cortexm_isr_end();
 }
 #endif /* TIMER_1_EN */
 

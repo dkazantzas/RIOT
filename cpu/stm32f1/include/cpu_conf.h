@@ -25,10 +25,10 @@
 
 #include "cpu_conf_common.h"
 
-#if defined(CPU_MODEL_STM32F103CB) || defined(CPU_MODEL_STM32F103RB)
-#include "stm32f103xb.h"
+#if defined(CPU_MODEL_STM32F103C8) || defined(CPU_MODEL_STM32F103CB) || defined(CPU_MODEL_STM32F103RB)
+#include "vendor/stm32f103xb.h"
 #elif defined(CPU_MODEL_STM32F103RE)
-#include "stm32f103xe.h"
+#include "vendor/stm32f103xe.h"
 #endif
 
 #ifdef __cplusplus
@@ -40,18 +40,28 @@ extern "C" {
  * @{
  */
 #define CPU_DEFAULT_IRQ_PRIO            (1U)
+#if defined(CPU_MODEL_STM32F103RE)
 #define CPU_IRQ_NUMOF                   (60U)
+#else
+#define CPU_IRQ_NUMOF                   (43U)
+#endif
 #define CPU_FLASH_BASE                  FLASH_BASE
 /** @} */
 
 /**
- * @brief Configure the CPU's clock system
- *
- * @param[in] source    source clock frequency
- * @param[in] target    target clock frequency
- * @param[in] prescale  prescaler to use
+ * @brief   Flash page configuration
+ * @{
  */
-void cpu_clock_scale(uint32_t source, uint32_t target, uint32_t *prescale);
+#define FLASHPAGE_SIZE      (2048U)
+
+#if defined(CPU_MODEL_STM32F103C8)
+#define FLASHPAGE_NUMOF     (32U)
+#elif defined(CPU_MODEL_STM32F103CB) || defined(CPU_MODEL_STM32F103RB)
+#define FLASHPAGE_NUMOF     (64U)
+#elif defined(CPU_MODEL_STM32F103RE)
+#define FLASHPAGE_NUMOF     (256U)
+#endif
+/** @} */
 
 #ifdef __cplusplus
 }

@@ -8,10 +8,14 @@
 
 /**
  * @ingroup     cpu_samd21
+ * @ingroup     drivers_periph_rtt
  * @{
+ *
  * @file
  * @brief       Low-level RTT driver implementation
+ *
  * @author      Daniel Krebs <github@daniel-krebs.net>
+ *
  * @}
  */
 
@@ -19,12 +23,14 @@
 #include "cpu.h"
 #include "periph/rtt.h"
 #include "periph_conf.h"
-#include "sched.h"
-#include "thread.h"
 
 /* guard file in case no RTT device was specified */
 #if RTT_NUMOF
 
+/* if RTT_PRESCALER is not set, then set it to DIV1 */
+#ifndef RTT_PRESCALER
+#define RTT_PRESCALER       RTC_MODE0_CTRL_PRESCALER_DIV1
+#endif
 
 typedef struct {
     rtt_cb_t    overflow_cb;    /**< called from RTT interrupt on overflow */
@@ -98,7 +104,8 @@ void rtt_init(void)
     while (rtcMode0->STATUS.bit.SYNCBUSY || rtcMode0->CTRL.bit.SWRST) {}
 
     /* Configure as 32bit counter with no prescaler and no clear on match compare */
-    rtcMode0->CTRL.reg = RTC_MODE0_CTRL_MODE_COUNT32 | RTC_MODE0_CTRL_PRESCALER_DIV1;
+    rtcMode0->CTRL.reg = RTC_MODE0_CTRL_MODE_COUNT32 |
+                         RTT_PRESCALER;
     while (rtcMode0->STATUS.bit.SYNCBUSY) {}
 
     /* Setup interrupt */
@@ -115,7 +122,7 @@ void rtt_set_overflow_cb(rtt_cb_t cb, void *arg)
 
     /* Enable Overflow Interrupt and clear flag */
     RtcMode0 *rtcMode0 = &(RTT_DEV);
-    rtcMode0->INTFLAG.bit.OVF = 1;
+    rtcMode0->INTFLAG.reg |= RTC_MODE0_INTFLAG_OVF;
     rtcMode0->INTENSET.bit.OVF = 1;
 }
 
@@ -153,7 +160,7 @@ void rtt_set_alarm(uint32_t alarm, rtt_cb_t cb, void *arg)
     while (rtcMode0->STATUS.bit.SYNCBUSY) {}
 
     /* Enable Compare Interrupt and clear flag */
-    rtcMode0->INTFLAG.bit.CMP0 = 1;
+    rtcMode0->INTFLAG.reg |= RTC_MODE0_INTFLAG_CMP0;
     rtcMode0->INTENSET.bit.CMP0 = 1;
 }
 
@@ -194,17 +201,15 @@ void RTT_ISR(void)
 
     if ( (status & RTC_MODE0_INTFLAG_CMP0) && (rtt_callback.alarm_cb != NULL) ) {
         rtt_callback.alarm_cb(rtt_callback.alarm_arg);
-        rtcMode0->INTFLAG.bit.CMP0 = 1;
+        rtcMode0->INTFLAG.reg |= RTC_MODE0_INTFLAG_CMP0;
     }
 
     if ( (status & RTC_MODE0_INTFLAG_OVF) && (rtt_callback.overflow_cb != NULL) ) {
         rtt_callback.overflow_cb(rtt_callback.overflow_arg);
-        rtcMode0->INTFLAG.bit.OVF = 1;
+        rtcMode0->INTFLAG.reg |= RTC_MODE0_INTFLAG_OVF;
     }
 
-    if (sched_context_switch_request) {
-        thread_yield();
-    }
+    cortexm_isr_end();
 }
 
 

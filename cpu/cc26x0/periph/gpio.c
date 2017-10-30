@@ -8,6 +8,7 @@
 
 /**
  * @ingroup     cpu_cc26x0
+ * @ingroup     drivers_periph_gpio
  * @{
  *
  * @file
@@ -19,8 +20,6 @@
  */
 
 #include "cpu.h"
-#include "sched.h"
-#include "thread.h"
 #include "periph/gpio.h"
 
 #define GPIO_ISR_CHAN_NUMOF     (32)
@@ -48,7 +47,6 @@ int gpio_init(gpio_t pin, gpio_mode_t mode)
     IOC->CFG[pin] = mode;
     GPIO->DOE &= ~(1 << pin);
     GPIO->DOE |= ((~(mode >> DOE_SHIFT) & 0x1) << pin);
-    GPIO->DOUTCLR = (1 << pin);
 
     return 0;
 }
@@ -128,7 +126,5 @@ void isr_edge(void)
             gpio_chan[pin].cb(gpio_chan[pin].arg);
         }
     }
-    if (sched_context_switch_request) {
-        thread_yield();
-    }
+    cortexm_isr_end();
 }

@@ -16,7 +16,7 @@
  * @brief       MSB-A2 board initialization
  *
  * @author      Heiko Will
- * @author      Kaspar Schleiser
+ * @author      Kaspar Schleiser <kaspar@schleiser.de>
  * @author      Michael Baar <baar@inf.fu-berlin.de>
  * @author      Zakaria Kasmi <zkasmi@inf.fu-berlin.de>
  * @note        $Id$
@@ -24,7 +24,6 @@
 #include <string.h>
 #include "board.h"
 #include "msba2_common.h"
-#include "lpc23xx.h"
 #include "cpu.h"
 
 #define CL_CPU_DIV      4

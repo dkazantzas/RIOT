@@ -8,6 +8,7 @@
 
 /**
  * @ingroup     cpu_stm32f1
+ * @ingroup     drivers_periph_rtt
  * @{
  *
  * @file
@@ -19,8 +20,6 @@
  */
 
 #include "cpu.h"
-#include "sched.h"
-#include "thread.h"
 #include "periph/rtt.h"
 #include "periph_conf.h"
 
@@ -36,8 +35,8 @@
 #define RTT_FLAG_ALR         ((uint16_t)0x0002)  /**< Alarm flag */
 #define RTT_FLAG_SEC         ((uint16_t)0x0001)  /**< Second flag */
 
-inline void _rtt_enter_config_mode(void);
-inline void _rtt_leave_config_mode(void);
+static inline void _rtt_enter_config_mode(void);
+static inline void _rtt_leave_config_mode(void);
 
 /*
  * callback and argument for an active alarm
@@ -155,7 +154,7 @@ void rtt_clear_alarm(void)
 
 void rtt_poweron(void)
 {
-    RCC->APB1ENR |= (RCC_APB1ENR_BKPEN|RCC_APB1ENR_PWREN); /* enable BKP and PWR, Clock */
+    periph_clk_en(APB1, (RCC_APB1ENR_BKPEN|RCC_APB1ENR_PWREN)); /* enable BKP and PWR, Clock */
     /* RTC clock source configuration */
     PWR->CR |= PWR_CR_DBP;                   /* Allow access to BKP Domain */
     RCC->BDCR |= RCC_BDCR_LSEON;             /* Enable LSE OSC */
@@ -168,10 +167,10 @@ void rtt_poweroff(void)
 {
     PWR->CR |= PWR_CR_DBP;                   /* Allow access to BKP Domain */
     RCC->BDCR &= ~RCC_BDCR_RTCEN;            /* disable RTC */
-    RCC->APB1ENR &= ~(RCC_APB1ENR_BKPEN|RCC_APB1ENR_PWREN); /* disable BKP and PWR, Clock */
+    periph_clk_dis(APB1, (RCC_APB1ENR_BKPEN|RCC_APB1ENR_PWREN)); /* disable BKP and PWR, Clock */
 }
 
-inline void _rtt_enter_config_mode(void)
+static inline void _rtt_enter_config_mode(void)
 {
     /* Loop until RTOFF flag is set */
     while (!(RTT_DEV->CRL & RTT_FLAG_RTOFF)) {}
@@ -179,7 +178,7 @@ inline void _rtt_enter_config_mode(void)
     RTT_DEV->CRL |= RTC_CRL_CNF;
 }
 
-inline void _rtt_leave_config_mode(void)
+static inline void _rtt_leave_config_mode(void)
 {
     /* leave configuration mode */
     RTT_DEV->CRL &= ~RTC_CRL_CNF;
@@ -197,9 +196,7 @@ void RTT_ISR(void)
         RTT_DEV->CRL &= ~(RTC_CRL_OWF);
         overflow_cb(overflow_arg);
     }
-    if (sched_context_switch_request) {
-        thread_yield();
-    }
+    cortexm_isr_end();
 }
 
 #endif /* RTT_NUMOF */

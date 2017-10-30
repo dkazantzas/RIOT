@@ -8,6 +8,7 @@
 
 /**
  * @ingroup     cpu_stm32f0
+ * @ingroup     drivers_periph_adc
  * @{
  *
  * @file
@@ -44,12 +45,12 @@ static mutex_t lock = MUTEX_INIT;
 static inline void prep(void)
 {
     mutex_lock(&lock);
-    RCC->APB2ENR |= RCC_APB2ENR_ADCEN;
+    periph_clk_en(APB2, RCC_APB2ENR_ADCEN);
 }
 
 static inline void done(void)
 {
-    RCC->APB2ENR &= ~(RCC_APB2ENR_ADCEN);
+    periph_clk_dis(APB2, RCC_APB2ENR_ADCEN);
     mutex_unlock(&lock);
 }
 

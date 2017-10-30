@@ -559,10 +559,9 @@ static void test_fib_14_exact_and_prefix_match(void)
     memset(addr_nxt, 0, add_buf_size);
     memset(addr_lookup, 0, add_buf_size);
 
-    /* cppcheck: addr_lookup is only passed but not required to be read,
-    *            since we test prefix matching
-    */
-    /* cppcheck-suppress redundantCopy */
+    /* cppcheck-suppress redundantCopy
+     * (reason: addr_lookup is only passed but not required to be read,
+     *  since we test prefix matching) */
     snprintf(addr_lookup, add_buf_size, "Test addr124");
     ret = fib_get_next_hop(&test_fib_table, &iface_id,
                            (uint8_t *)addr_nxt, &add_buf_size, &next_hop_flags,
@@ -604,7 +603,7 @@ static void test_fib_15_get_lifetime(void)
                                                     add_buf_size - 1));
 
     /* assuming some ms passed during these operations... */
-    now = xtimer_now64();
+    now = xtimer_now_usec64();
     uint64_t cmp_lifetime = now + 900000lU;
     uint64_t cmp_max_lifetime = now + 1100000lU;
 
@@ -709,7 +708,8 @@ static void test_fib_16_prefix_match(void)
 */
 static void test_fib_17_get_entry_set(void)
 {
-    size_t addr_buf_size = 16;
+    /* FIXME: init as enum to fix folding-constant compiler error on OS X */
+    enum { addr_buf_size = 16 };
     char addr_dst[addr_buf_size];
     char addr_nxt[addr_buf_size];
 
@@ -727,9 +727,8 @@ static void test_fib_17_get_entry_set(void)
     fib_destination_set_entry_t arr_dst[arr_size];
     char prefix[addr_buf_size];
     memset(prefix,0, addr_buf_size);
-    /* cppcheck: prefix is set to all 0 before adding an address
-    */
-    /* cppcheck-suppress redundantCopy */
+    /* cppcheck-suppress redundantCopy
+     * (reason: prefix is set to all 0 before adding an address) */
     snprintf(prefix, addr_buf_size, "Test address 1");
 
     int ret = fib_get_destination_set(&test_fib_table,
@@ -742,13 +741,12 @@ static void test_fib_17_get_entry_set(void)
     arr_size = 20;
 
     memset(prefix,0, addr_buf_size);
-    /* cppcheck: prefix is set to all 0 before adding an address
-    */
-    /* cppcheck-suppress redundantCopy */
+    /* cppcheck-suppress redundantCopy
+     * (reason: prefix is set to all 0 before adding an address) */
     snprintf(prefix, addr_buf_size, "Test address 0");
 
     ret = fib_get_destination_set(&test_fib_table,
-                                  (uint8_t *)prefix, addr_buf_size-1,
+                                  (uint8_t *)prefix, addr_buf_size - 1,
                                   &arr_dst[0], &arr_size);
     TEST_ASSERT_EQUAL_INT(0, ret);
 
@@ -756,11 +754,13 @@ static void test_fib_17_get_entry_set(void)
     TEST_ASSERT_EQUAL_INT(20, arr_size);
     arr_size = 20;
 
-    memset(prefix,0, addr_buf_size);
+    memset(prefix, 0, addr_buf_size);
+    /* cppcheck-suppress redundantCopy
+     * (reason: prefix is set to all 0 before adding an address) */
     snprintf(prefix, addr_buf_size, "Test address");
 
     ret = fib_get_destination_set(&test_fib_table,
-                                  (uint8_t *)prefix, addr_buf_size-1,
+                                  (uint8_t *)prefix, addr_buf_size - 1,
                                   &arr_dst[0], &arr_size);
     TEST_ASSERT_EQUAL_INT(0, ret);
 
