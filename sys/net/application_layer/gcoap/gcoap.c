@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2016 Ken Bannister. All rights reserved.
+ * Copyright (c) 2015-2017 Ken Bannister. All rights reserved.
  *
  * This file is subject to the terms and conditions of the GNU Lesser
  * General Public License v2.1. See the file LICENSE in the top level
@@ -35,8 +35,9 @@ static size_t _handle_req(coap_pkt_t *pdu, uint8_t *buf, size_t len,
                                                          sock_udp_ep_t *remote);
 static ssize_t _finish_pdu(coap_pkt_t *pdu, uint8_t *buf, size_t len);
 static void _expire_request(gcoap_request_memo_t *memo);
+static bool _endpoints_equal(const sock_udp_ep_t *ep1, const sock_udp_ep_t *ep2);
 static void _find_req_memo(gcoap_request_memo_t **memo_ptr, coap_pkt_t *pdu,
-                                                            uint8_t *buf, size_t len);
+                           const sock_udp_ep_t *remote);
 static void _find_resource(coap_pkt_t *pdu, coap_resource_t **resource_ptr,
                                             gcoap_listener_t **listener_ptr);
 static int _find_observer(sock_udp_ep_t **observer, sock_udp_ep_t *remote);
@@ -156,7 +157,7 @@ static void _listen(sock_udp_t *sock)
 
     /* incoming response */
     else {
-        _find_req_memo(&memo, &pdu, buf, sizeof(buf));
+        _find_req_memo(&memo, &pdu, &remote);
         if (memo) {
             xtimer_remove(&memo->response_timer);
             memo->state = GCOAP_MEMO_RESP;
@@ -329,41 +330,39 @@ static ssize_t _finish_pdu(coap_pkt_t *pdu, uint8_t *buf, size_t len)
 
 /*
  * Finds the memo for an outstanding request within the _coap_state.open_reqs
- * array. Matches on token.
+ * array. Matches on remote endpoint and token.
  *
- * src_pdu Source for the match token
+ * memo_ptr[out] -- Registered request memo, or NULL if not found
+ * src_pdu[in] -- PDU for token to match
+ * remote[in] -- Remote endpoint to match
  */
 static void _find_req_memo(gcoap_request_memo_t **memo_ptr, coap_pkt_t *src_pdu,
-                                                            uint8_t *buf, size_t len)
+                           const sock_udp_ep_t *remote)
 {
-    gcoap_request_memo_t *memo;
-    coap_pkt_t memo_pdu = { .token = NULL };
-    (void) buf;
-    (void) len;
+    *memo_ptr = NULL;
+    /* no need to initialize struct; we only care about buffer contents below */
+    coap_pkt_t memo_pdu_data;
+    coap_pkt_t *memo_pdu = &memo_pdu_data;
+    unsigned cmplen      = coap_get_token_len(src_pdu);
 
     for (int i = 0; i < GCOAP_REQ_WAITING_MAX; i++) {
         if (_coap_state.open_reqs[i].state == GCOAP_MEMO_UNUSED)
             continue;
 
-        /* setup memo PDU from memo header */
-        memo                 = &_coap_state.open_reqs[i];
-        coap_hdr_t *memo_hdr = (coap_hdr_t *) &memo->hdr_buf[0];
-        memo_pdu.hdr         = memo_hdr;
-        if (coap_get_token_len(&memo_pdu)) {
-            memo_pdu.token = &memo_hdr->data[0];
+        gcoap_request_memo_t *memo = &_coap_state.open_reqs[i];
+        if (memo->send_limit == GCOAP_SEND_LIMIT_NON) {
+            memo_pdu->hdr = (coap_hdr_t *) &memo->msg.hdr_buf[0];
         }
-        /* match on token */
-        if (coap_get_token_len(src_pdu) == coap_get_token_len(&memo_pdu)) {
-            uint8_t *src_byte  = src_pdu->token;
-            uint8_t *memo_byte = memo_pdu.token;
-            size_t j;
-            for (j = 0; j < coap_get_token_len(src_pdu); j++) {
-                if (*src_byte++ != *memo_byte++) {
-                    break;      /* token mismatch */
-                }
-            }
-            if (j == coap_get_token_len(src_pdu)) {
+        else {
+            memo_pdu->hdr = (coap_hdr_t *) memo->msg.data.pdu_buf;
+        }
+
+        if (coap_get_token_len(memo_pdu) == cmplen) {
+            memo_pdu->token = &memo_pdu->hdr->data[0];
+            if ((memcmp(src_pdu->token, memo_pdu->token, cmplen) == 0)
+                    && _endpoints_equal(&memo->remote_ep, remote)) {
                 *memo_ptr = memo;
+                break;
             }
         }
     }
@@ -379,7 +378,7 @@ static void _expire_request(gcoap_request_memo_t *memo)
         memo->state = GCOAP_MEMO_TIMEOUT;
         /* Pass response to handler */
         if (memo->resp_handler) {
-            req.hdr = (coap_hdr_t *)&memo->hdr_buf[0];   /* for reference */
+            req.hdr = (coap_hdr_t *)&memo->msg.hdr_buf[0];   /* for reference */
             memo->resp_handler(memo->state, &req, NULL);
         }
         memo->state = GCOAP_MEMO_UNUSED;
@@ -467,6 +466,24 @@ static ssize_t _write_options(coap_pkt_t *pdu, uint8_t *buf, size_t len)
     return bufpos - buf;
 }
 
+static bool _endpoints_equal(const sock_udp_ep_t *ep1, const sock_udp_ep_t *ep2)
+{
+    if (ep1->family != ep2->family) {
+        return false;
+    }
+    if (ep1->port != ep2->port) {
+        return false;
+    }
+
+    switch (ep1->family) {
+    case AF_INET6:
+        return memcmp(&ep1->addr.ipv6[0], &ep2->addr.ipv6[0], 16) == 0;
+    case AF_INET:
+        return ep1->addr.ipv4_u32 == ep2->addr.ipv4_u32;
+    }
+    return false;
+}
+
 /*
  * Find registered observer for a remote address and port.
  *
@@ -481,23 +498,11 @@ static int _find_observer(sock_udp_ep_t **observer, sock_udp_ep_t *remote)
     int empty_slot = -1;
     *observer      = NULL;
     for (unsigned i = 0; i < GCOAP_OBS_CLIENTS_MAX; i++) {
-        unsigned cmplen = 0;
 
         if (_coap_state.observers[i].family == AF_UNSPEC) {
-            cmplen     = 0;
             empty_slot = i;
         }
-        else if (_coap_state.observers[i].family == AF_INET6) {
-            cmplen = 16;
-        }
-        else {
-            cmplen = 4;
-        }
-        if (cmplen &&
-                memcmp(&_coap_state.observers[i].addr.ipv6[0], &remote->addr.ipv6[0],
-                                                               cmplen) == 0
-                && _coap_state.observers[i].port == remote->port) {
-
+        else if (_endpoints_equal(&_coap_state.observers[i], remote)) {
             *observer = &_coap_state.observers[i];
             break;
         }
@@ -692,7 +697,9 @@ size_t gcoap_req_send2(const uint8_t *buf, size_t len,
     mutex_unlock(&_coap_state.lock);
 
     if (memo) {
-        memcpy(&memo->hdr_buf[0], buf, GCOAP_HEADER_MAXLEN);
+        memo->send_limit = GCOAP_SEND_LIMIT_NON;
+        memcpy(&memo->msg.hdr_buf[0], buf, GCOAP_HEADER_MAXLEN);
+        memcpy(&memo->remote_ep, remote, sizeof(sock_udp_ep_t));
         memo->resp_handler = resp_handler;
 
         size_t res = sock_udp_send(&_sock, buf, len, remote);

@@ -26,7 +26,7 @@ define board_missing_features
 
   include $(RIOTBASE)/Makefile.dep
 
-  FEATURES_MISSING := $$(filter-out $$(FEATURES_PROVIDED), $$(FEATURES_REQUIRED))
+  FEATURES_MISSING := $$(sort $$(filter-out $$(FEATURES_PROVIDED), $$(FEATURES_REQUIRED)))
   ifneq (, $${FEATURES_MISSING})
     BOARDS_FEATURES_MISSING += "${1} $${FEATURES_MISSING}"
     ifneq (, $$(filter-out $$(FEATURES_OPTIONAL), $$(FEATURES_MISSING)))
@@ -35,7 +35,7 @@ define board_missing_features
   endif
 endef
 
-BOARDS ?= $(shell find $(RIOTBOARD)/* -maxdepth 0 -type d \! -name "*-common" -exec basename {} \;)
+BOARDS ?= $(shell find $(RIOTBOARD)/* -maxdepth 0 -type d \! -name "common" -exec basename {} \;)
 BOARDS := $(filter $(if $(BOARD_WHITELIST), $(BOARD_WHITELIST), %), $(BOARDS))
 BOARDS := $(filter-out $(BOARD_BLACKLIST), $(BOARDS))
 

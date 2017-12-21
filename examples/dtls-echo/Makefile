@@ -17,7 +17,7 @@ BOARD_INSUFFICIENT_MEMORY := airfy-beacon b-l072z-lrwan1 bluepill calliope-mini 
                              microbit nrf51dongle nrf6310 nucleo32-f031 \
                              nucleo32-f042 nucleo32-f303 nucleo32-l031 nucleo-f030 \
                              nucleo-f070 nucleo-f072 nucleo-f103 nucleo-f302 nucleo-f334 \
-                             nucleo-l053 nucleo-l073 opencm904 pca10000 pca10005 \
+                             nucleo-l053 nucleo-l073 opencm904 \
                              spark-core stm32f0discovery yunjia-nrf51822
 
 # Include packages that pull up and auto-init the link layer.
@@ -46,7 +46,7 @@ USEMODULE += ps
 # Comment this out to disable code in RIOT that does safety checking
 # which is not needed in a production environment but helps in the
 # development process:
-CFLAGS += -DDEVELHELP
+DEVELHELP ?= 1
 
 # NOTE: Add the package for TinyDTLS
 USEPKG += tinydtls
