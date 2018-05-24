@@ -1,12 +1,12 @@
 include ../Makefile.tests_common
 
-BOARD_INSUFFICIENT_MEMORY := nucleo32-f031
+BOARD_INSUFFICIENT_MEMORY := nucleo-f031k6
 
 DISABLE_MODULE += auto_init
+
+TEST_ON_CI_WHITELIST += all
 
 include $(RIOTBASE)/Makefile.include
 
 test:
-# `testrunner` calls `make term` recursively, results in duplicated `TERMFLAGS`.
-# So clears `TERMFLAGS` before run.
-	TERMFLAGS= tests/01-run.py
+	tests/01-run.py

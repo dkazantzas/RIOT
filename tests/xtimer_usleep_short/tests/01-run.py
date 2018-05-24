@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright (C) 2017 Michel Rottleuthner <michel.rottleuthner@haw-hamburg.de>
 #
@@ -29,6 +29,6 @@ def testfunc(child):
 
 
 if __name__ == "__main__":
-    sys.path.append(os.path.join(os.environ['RIOTBASE'], 'dist/tools/testrunner'))
+    sys.path.append(os.path.join(os.environ['RIOTTOOLS'], 'testrunner'))
     from testrunner import run
     sys.exit(run(testfunc))

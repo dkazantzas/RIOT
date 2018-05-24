@@ -6,6 +6,7 @@ export QQ                    # as Q, but be more quiet
 export QUIET                 # The parameter to use whether to show verbose makefile commands or not.
 
 export APPLICATION           # The application, set in the Makefile which is run by the user.
+export APPLICATION_MODULE    # The application module name.
 export BOARD                 # The board to compile the application for.
 export CPU                   # The CPU, set by the board's Makefile.include.
 export CPU_MODEL             # The specific identifier of the used CPU, used for some CPU implementations to differentiate between different memory layouts
@@ -21,6 +22,7 @@ export RIOTBASE              # The root folder of RIOT. The folder where this ve
 export RIOTCPU               # For third party CPUs this folder is the base of the CPUs.
 export RIOTBOARD             # For third party BOARDs this folder is the base of the BOARDs.
 export RIOTPKG               # For overriding RIOT's pkg directory
+export RIOTTOOLS             # Location of host machine tools
 export RIOTPROJECT           # Top level git root of the project being built, or PWD if not a git repository
 export RIOTMAKE              # Location of all supplemental Makefiles (such as this file)
 export BINDIRBASE            # This is the folder where the application should be built in. For each BOARD a different subfolder is used.
@@ -54,7 +56,8 @@ export OFLAGS                # The parameter for OBJCOPY, e.g. to strip the debu
 export OBJDUMP               # The command used to create the assembly listing.
 export OBJDUMPFLAGS          # The parameter for OBJDUMP.
 export SIZE                  # The command to read to size of the ELF sections.
-export UNDEF                 # Set by the BOARD's and CPU's Makefile.include, this contains object files with must not be used in the ELFFILE even if the if no call to the functions.
+export SIZEFLAGS             # The optional size flags.
+export UNDEF                 # Object files that the linker must include in the ELFFILE even if no call to the functions or symbols (ex: interrupt vectors).
 export WERROR                # Treat all compiler warnings as errors if set to 1 (see -Werror flag in GCC manual)
 
 export GITCACHE              # path to git-cache executable

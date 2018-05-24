@@ -9,7 +9,7 @@
 /**
  * @defgroup    boards_opencm904 OpenCM9.04
  * @ingroup     boards
- * @brief       Board specific files for the OpenCM9.04 board
+ * @brief       Support for the OpenCM9.04 board
  * @{
  *
  * @file
@@ -49,7 +49,7 @@ extern "C" {
 /** @} */
 
 /**
- * @brief User button
+ * @name User button
  * @{
  */
 #define BTN0_PIN            GPIO_PIN(PORT_C, 15)

@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2013 - 2014  INRIA.
- * Copyright (C) 2015 Cenk Gündoğan <cnkgndgn@gmail.com>
+ * Copyright (C) 2018       HAW Hamburg
+ * Copyright (C) 2015–2017  Cenk Gündoğan <cenk.guendogan@haw-hamburg.de>
+ * Copyright (C) 2013–2014  INRIA.
  *
  * This file is subject to the terms and conditions of the GNU Lesser General
  * Public License v2.1. See the file LICENSE in the top level directory for more
@@ -12,7 +13,7 @@
  *
  * @file
  *
- * @author  Cenk Gündoğan <cnkgndgn@gmail.com>
+ * @author Cenk Gündoğan <cenk.guendogan@haw-hamburg.de>
  */
 
 #include "net/af.h"
@@ -23,6 +24,7 @@
 #include "net/gnrc/netif/internal.h"
 #include "net/gnrc.h"
 #include "net/eui64.h"
+#include "gnrc_rpl_internal/globals.h"
 
 #ifdef MODULE_NETSTATS_RPL
 #include "gnrc_rpl_internal/netstats.h"
@@ -42,9 +44,7 @@
 #define ENABLE_DEBUG    (0)
 #include "debug.h"
 
-#if ENABLE_DEBUG
 static char addr_str[IPV6_ADDR_MAX_STR_LEN];
-#endif
 
 #define GNRC_RPL_GROUNDED_SHIFT             (7)
 #define GNRC_RPL_MOP_SHIFT                  (3)
@@ -465,10 +465,11 @@ bool _parse_options(int msg_type, gnrc_rpl_instance_t *inst, gnrc_rpl_opt_t *opt
                     first_target = target;
                 }
 
-                DEBUG("RPL: adding FT entry %s/%d 0x%" PRIx32 "\n",
-                      ipv6_addr_to_str(addr_str, &(target->target), sizeof(addr_str)),
+                DEBUG("RPL: adding FT entry %s/%d\n",
+                      ipv6_addr_to_str(addr_str, &(target->target), (unsigned)sizeof(addr_str)),
                       target->prefix_length);
 
+                gnrc_ipv6_nib_ft_del(&(target->target), target->prefix_length);
                 gnrc_ipv6_nib_ft_add(&(target->target), target->prefix_length, src,
                                      dodag->iface,
                                      dodag->default_lifetime * dodag->lifetime_unit);
@@ -489,6 +490,8 @@ bool _parse_options(int msg_type, gnrc_rpl_instance_t *inst, gnrc_rpl_opt_t *opt
                           ipv6_addr_to_str(addr_str, &(first_target->target), sizeof(addr_str)),
                           first_target->prefix_length);
 
+                    gnrc_ipv6_nib_ft_del(&(first_target->target),
+                                         first_target->prefix_length);
                     gnrc_ipv6_nib_ft_add(&(first_target->target),
                                          first_target->prefix_length, src,
                                          dodag->iface,
@@ -686,7 +689,7 @@ void gnrc_rpl_recv_DIO(gnrc_rpl_dio_t *dio, kernel_pid_t iface, ipv6_addr_t *src
 
     /* sender of incoming DIO is not a parent of mine (anymore) and has an INFINITE rank
        and I have a rank != INFINITE_RANK */
-    if (parent->state == 0) {
+    if (parent->state == GNRC_RPL_PARENT_UNUSED) {
         if ((byteorder_ntohs(dio->rank) == GNRC_RPL_INFINITE_RANK)
              && (dodag->my_rank != GNRC_RPL_INFINITE_RANK)) {
             trickle_reset_timer(&dodag->trickle);

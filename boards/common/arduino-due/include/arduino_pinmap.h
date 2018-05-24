@@ -112,10 +112,10 @@ extern "C" {
 #define ARDUINO_PIN_76          GPIO_PIN(PA, 27)
 #define ARDUINO_PIN_77          GPIO_PIN(PA, 28)
 #define ARDUINO_PIN_78          GPIO_PIN(PB, 23)
-/** @ */
+/** @} */
 
 /**
- * @name    Mapping of Ardunino analog pins to RIOT ADC lines
+ * @name    Mapping of Arduino analog pins to RIOT ADC lines
  * @{
  */
 #define ARDUINO_A0              ADC_LINE(7)

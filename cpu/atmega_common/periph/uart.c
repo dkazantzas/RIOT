@@ -58,9 +58,7 @@
 
 /**
  * @brief   Configured device map
- * @{
  */
-#if UART_NUMOF
 static mega_uart_t *dev[] = {
 #ifdef UART_0
     UART_0,
@@ -75,10 +73,6 @@ static mega_uart_t *dev[] = {
     UART_3
 #endif
 };
-#else
-/* fallback if no UART is defined */
-static const mega_uart_t *dev[] = { NULL };
-#endif
 
 /**
  * @brief   Allocate memory to store the callback functions.
@@ -97,7 +91,7 @@ static void _set_brr(uart_t uart, uint32_t baudrate)
 {
     uint16_t brr;
 #if defined(UART_STDIO_BAUDRATE)
-    // UBRR_VALUE and USE_2X are statically computed from <util/setbaud.h>
+    /* UBRR_VALUE and USE_2X are statically computed from <util/setbaud.h> */
     if (baudrate == UART_STDIO_BAUDRATE) {
         _update_brr(uart, UBRR_VALUE, USE_2X);
         return;
@@ -152,12 +146,25 @@ void uart_write(uart_t uart, const uint8_t *data, size_t len)
     }
 }
 
+void uart_poweron(uart_t uart)
+{
+    (void)uart;
+    /* not implemented (yet) */
+}
+
+void uart_poweroff(uart_t uart)
+{
+    (void)uart;
+    /* not implemented (yet) */
+}
+
 static inline void isr_handler(int num)
 {
     isr_ctx[num].rx_cb(isr_ctx[num].arg, dev[num]->DR);
 
     if (sched_context_switch_request) {
         thread_yield();
+        thread_yield_isr();
     }
 }
 

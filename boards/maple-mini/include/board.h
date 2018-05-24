@@ -9,7 +9,7 @@
 /**
  * @defgroup    boards_maple-mini maple-mini
  * @ingroup     boards
- * @brief       Board specific files for the maple-mini board
+ * @brief       Support for the maple-mini board
  * @{
  *
  * @file
@@ -49,7 +49,7 @@ extern "C" {
 /** @} */
 
 /**
- * @brief   User button
+ * @name    User button
  * @{
  */
 #define BTN0_PIN            GPIO_PIN(PORT_B, 8)
